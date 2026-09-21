@@ -505,6 +505,33 @@ func (c *WebsiteController) GetIndexedPages(ctx *gin.Context) {
 
 }
 
+func (c *WebsiteController) UpdateLocalDev(ctx *gin.Context) {
+	var websiteID WebsiteIDPP
+	if err := ctx.ShouldBindUri(&websiteID); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": err,
+		})
+		return
+	}
+
+	var enabled models.IsLocalDevEnabled
+	if err := ctx.ShouldBindJSON(&enabled); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": err,
+		})
+		return
+	}
+
+	if err := c.serv.UpdateLocalDev(ctx, &enabled, uuid.MustParse(websiteID.WebsiteID)); err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"error": err,
+		})
+		return
+	}
+
+	ctx.Status(http.StatusOK)
+}
+
 func (c *WebsiteController) DeleteWebsite(ctx *gin.Context) {
 	var websiteID WebsiteIDPP
 	if err := ctx.ShouldBindUri(&websiteID); err != nil {

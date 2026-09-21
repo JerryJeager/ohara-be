@@ -16,6 +16,7 @@ type WebsiteStore interface {
 	DeleteWebsite(ctx context.Context, websiteID uuid.UUID) error
 	GetWebsite(ctx context.Context, userID uuid.UUID) (*[]models.Website, error)
 	UpdateWebsiteStatus(websiteID uuid.UUID, status string) error
+	UpdateLocalDev(ctx context.Context, enabled *models.IsLocalDevEnabled, websiteID uuid.UUID) error
 }
 
 type WebsiteRepo struct {
@@ -63,6 +64,10 @@ func (r *WebsiteRepo) DeleteWebsite(ctx context.Context, websiteID uuid.UUID) er
 
 func (r *WebsiteRepo) UpdateWebsiteStatus(websiteID uuid.UUID, status string) error {
 	return r.client.Model(&models.Website{}).Where("id = ?", websiteID).Update("status", status).Error
+}
+
+func (r *WebsiteRepo) UpdateLocalDev(ctx context.Context, enabled *models.IsLocalDevEnabled, websiteID uuid.UUID) error {
+	return r.client.WithContext(ctx).Model(&models.Website{}).Where("id = ?", websiteID).Update("is_local_dev_enabled", enabled.IsLocalDevEnabled).Error
 }
 
 func UpdateWebsiteStatus(websiteID uuid.UUID, status string) error {

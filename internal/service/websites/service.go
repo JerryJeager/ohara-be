@@ -14,6 +14,7 @@ type WebsiteSv interface {
 	GetIndexedPages(ctx context.Context, websiteID uuid.UUID) (*models.IndexedPages, error)
 	DeleteWebsite(ctx context.Context, websiteID uuid.UUID) error
 	UpdateWebsiteStatus(websiteID uuid.UUID, status string) error
+	UpdateLocalDev(ctx context.Context, enabled *models.IsLocalDevEnabled, websiteID uuid.UUID) error
 }
 
 type WebsiteServ struct {
@@ -48,4 +49,8 @@ func (s *WebsiteServ) DeleteWebsite(ctx context.Context, websiteID uuid.UUID) er
 
 func (s *WebsiteServ) UpdateWebsiteStatus(websiteID uuid.UUID, status string) error {
 	return s.repo.UpdateWebsiteStatus(websiteID, status)
+}
+
+func (s *WebsiteServ) UpdateLocalDev(ctx context.Context, enabled *models.IsLocalDevEnabled, websiteID uuid.UUID) error {
+	return s.UpdateLocalDev(ctx, enabled, websiteID)
 }

@@ -24,3 +24,7 @@ type PageUrl struct {
 }
 
 type IndexedPages []PageUrl
+
+type IsLocalDevEnabled struct {
+	IsLocalDevEnabled bool `json:"is_local_dev_enabled" binding:"required"`
+}

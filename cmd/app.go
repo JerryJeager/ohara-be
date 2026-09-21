@@ -40,6 +40,7 @@ func ExecuteApiRoutes() {
 	websites.POST("", middleware.JwtAuthMiddleware(), websiteController.CreateWebsite)
 	websites.GET("", middleware.JwtAuthMiddleware(), websiteController.GetWebsite)
 	websites.GET("/:website_id/indexed", middleware.JwtAuthMiddleware(), websiteController.GetIndexedPages)
+	websites.PATCH("/:website_id/local-dev", middleware.JwtAuthMiddleware(), websiteController.UpdateLocalDev)
 	websites.DELETE("/:website_id", middleware.JwtAuthMiddleware(), websiteController.DeleteWebsite)
 
 	port := os.Getenv("PORT")
