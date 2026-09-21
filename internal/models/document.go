@@ -1,6 +1,8 @@
 package models
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/pgvector/pgvector-go"
 )
@@ -11,6 +13,7 @@ type Document struct {
 	WebsiteID uuid.UUID       `json:"website_id"`
 	Content   string          `json:"content" binding:"required"`
 	Embedding pgvector.Vector `json:"embedding"`
+	CreatedAt time.Time       `json:"created_at"`
 }
 
 type QueryDocument struct {

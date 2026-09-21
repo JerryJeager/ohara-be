@@ -9,9 +9,10 @@ import (
 )
 
 type UserStore interface {
+	SaveUser(ctx context.Context, user *models.User) error
 	CreateUser(ctx context.Context, user *models.User, otp *models.Otp) error
 	GetUserByEmail(ctx context.Context, email string) (*models.User, error)
-	GetUserByID(ctx context.Context, id string) (*models.User, error)
+	GetUserByID(ctx context.Context, id uuid.UUID) (*models.User, error)
 	GetUserOtp(ctx context.Context, userID uuid.UUID) (*models.Otp, error)
 	VerifyUser(ctx context.Context, userID uuid.UUID) error
 }
@@ -22,6 +23,10 @@ type UserRepo struct {
 
 func NewUserRepo(client *gorm.DB) *UserRepo {
 	return &UserRepo{client: client}
+}
+
+func (r *UserRepo) SaveUser(ctx context.Context, user *models.User) error {
+	return r.client.WithContext(ctx).Save(user).Error
 }
 
 func (r *UserRepo) CreateUser(ctx context.Context, user *models.User, otp *models.Otp) error {
@@ -49,7 +54,7 @@ func (r *UserRepo) GetUserByEmail(ctx context.Context, email string) (*models.Us
 	return &user, nil
 }
 
-func (r *UserRepo) GetUserByID(ctx context.Context, id string) (*models.User, error) {
+func (r *UserRepo) GetUserByID(ctx context.Context, id uuid.UUID) (*models.User, error) {
 	var user models.User
 	if err := r.client.WithContext(ctx).Where("id = ?", id).First(&user).Error; err != nil {
 		return nil, err

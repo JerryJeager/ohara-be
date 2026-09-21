@@ -29,9 +29,9 @@ func ExecuteApiRoutes() {
 	documents := api.Group("/documents")
 	websites := api.Group("/websites")
 
-	users.POST("/signup", userController.CreateUser)
-	users.POST("/verify-email", userController.VerifyUserEmail)
-	users.POST("/login", userController.Login)
+	users.POST("/auth/google", userController.GoogleAuth)
+	users.GET("", middleware.JwtAuthMiddleware(), userController.GetUser)
+	users.POST("/auth/refresh", middleware.RefreshAuthMiddleware(), userController.Refresh)
 
 	documents.GET("/embed", documentController.EmbedDocument)
 	documents.GET("/query/:website_id", documentController.QueryDocument)

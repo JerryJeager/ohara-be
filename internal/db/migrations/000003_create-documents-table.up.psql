@@ -1,7 +1,0 @@
-CREATE TABLE IF NOT EXISTS documents(
-    id BIGSERIAL PRIMARY KEY,
-    page_url VARCHAR,
-    website_id UUID REFERENCES websites(id) ON DELETE CASCADE,
-    content VARCHAR,
-    embedding VECTOR
-);

@@ -1,6 +1,8 @@
 package models
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"html"
 	"strings"
 	"time"
@@ -10,14 +12,39 @@ import (
 )
 
 type User struct {
-	ID           uuid.UUID    `json:"id"`
-	FirstName    string       `json:"first_name" binding:"required"`
-	LastName     string       `json:"last_name" binding:"required"`
-	Email        string       `json:"email" binding:"required"`
-	Password     string       `json:"password" binding:"required"`
-	IsVerified   bool         `json:"is_verified"`
-	CreatedAt    time.Time    `json:"created_at"`
-	UpdatedAt    time.Time    `json:"updated_at"`
+	ID             uuid.UUID `json:"id"`
+	Name           string    `json:"name"`
+	Email          string    `json:"email" binding:"required"`
+	ProfilePicture string    `json:"profile_picture"`
+	GoogleID       string    `json:"google_id"`
+	RefreshToken   string    `json:"refresh_token"`
+	CreatedAt      time.Time `json:"created_at"`
+}
+
+type GoogleAuthReq struct {
+	IDToken string `json:"id_token" binding:"required"`
+}
+
+type AccessTokens struct {
+	RefreshToken string `json:"refresh_token"`
+	AccessToken  string `json:"access_token"`
+}
+
+func VerifyRefreshToken(refreshToken, storedHash string) bool {
+	refreshToken = html.EscapeString(strings.TrimSpace(refreshToken))
+
+	hash := sha256.Sum256([]byte(refreshToken))
+	incomingHash := hex.EncodeToString(hash[:])
+
+	return incomingHash == storedHash
+}
+
+func (user *User) HashRefreshToken() {
+	user.RefreshToken = html.EscapeString(strings.TrimSpace(user.RefreshToken))
+
+	hash := sha256.Sum256([]byte(user.RefreshToken))
+
+	user.RefreshToken = hex.EncodeToString(hash[:])
 }
 
 type UserLogin struct {
@@ -31,22 +58,7 @@ type VerifyUserEmail struct {
 	Otp    string `json:"otp" binding:"required"`
 }
 
-func (user *User) HashPassword() error {
-	user.Password = html.EscapeString(strings.TrimSpace(user.Password))
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
-
-	if err != nil {
-		return err
-	}
-	user.Password = string(hashedPassword)
-
-	user.Email = html.EscapeString(strings.TrimSpace(user.Email))
-
-	return nil
-}
-
 func VerifyPassword(password, hashedPassword string) error {
 	password = html.EscapeString(strings.TrimSpace(password))
 	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
 }
-

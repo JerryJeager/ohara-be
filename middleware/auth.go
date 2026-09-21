@@ -28,3 +28,26 @@ func JwtAuthMiddleware() gin.HandlerFunc {
 		c.Next()
 	}
 }
+
+
+func RefreshAuthMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		refreshToken := auth.GetTokenFromRequest(c)
+		id, err := auth.ValidateToken(c)
+
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"status":     "Bad request",
+				"message":    "Authentication failed",
+				"statusCode": http.StatusUnauthorized,
+			})
+			fmt.Println(err)
+			c.Abort()
+			return
+		}
+		c.Set("user_id", id)
+		c.Set("refresh_token", refreshToken)
+
+		c.Next()
+	}
+}

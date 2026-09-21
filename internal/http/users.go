@@ -2,10 +2,13 @@ package http
 
 import (
 	"net/http"
+	"os"
 
 	"github.com/JerryJeager/ohara-be/internal/models"
 	"github.com/JerryJeager/ohara-be/internal/service/users"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	"google.golang.org/api/idtoken"
 )
 
 type UserController struct {
@@ -16,52 +19,99 @@ func NewUserController(serv users.UserSv) *UserController {
 	return &UserController{serv: serv}
 }
 
-func (c *UserController) CreateUser(ctx *gin.Context) {
-	var user models.User
-	if err := ctx.ShouldBindJSON(&user); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+func (c *UserController) GoogleAuth(ctx *gin.Context) {
+	var googleAuthReq models.GoogleAuthReq
+
+	if err := ctx.ShouldBindJSON(&googleAuthReq); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "invalid request body",
+		})
 		return
 	}
 
-	id, err := c.serv.CreateUser(ctx, &user)
+	payload, err := idtoken.Validate(ctx, googleAuthReq.IDToken, os.Getenv("GOOGLE_OAUTH_CLIENT_ID"))
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to validate Google ID token"})
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, gin.H{"user_id": id})
-}
+	email, _ := payload.Claims["email"].(string)
+	name, _ := payload.Claims["name"].(string)
+	googleID, _ := payload.Claims["sub"].(string)
+	picture, _ := payload.Claims["picture"].(string)
 
-func (c *UserController) VerifyUserEmail(ctx *gin.Context) {
-	var verify models.VerifyUserEmail
-	if err := ctx.ShouldBindJSON(&verify); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
-		return
+	user := &models.User{
+		Email:          email,
+		Name:           name,
+		GoogleID:       googleID,
+		ProfilePicture: picture,
 	}
 
-	if err := c.serv.VerfiyUserEmail(ctx, &verify); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"message": "failed to verify user", "error": err.Error()})
-		return
-	}
-
-	ctx.Status(http.StatusOK)
-}
-
-func (c *UserController) Login(ctx *gin.Context) {
-	var user models.UserLogin
-	if err := ctx.ShouldBindJSON(&user); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
-		return
-	}
-
-	userData, token, err := c.serv.Login(ctx, &user)
+	userData, token, err := c.serv.AuthUser(ctx, user)
 	if err != nil {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Login failed", "message": err.Error()})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save user", "message": err.Error()})
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{
+	ctx.JSON(http.StatusCreated, gin.H{
 		"user":  userData,
 		"token": token,
 	})
+}
+
+func (c *UserController) GetUser(ctx *gin.Context) {
+	user_id, err := GetUserID(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error":   "invalid access token",
+			"message": err.Error(),
+		})
+		return
+	}
+
+	userID := uuid.MustParse(user_id)
+
+	user, err := c.serv.GetUser(ctx, userID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "failed to get user",
+			"message": err.Error(),
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, user)
+}
+
+func (c *UserController) Refresh(ctx *gin.Context) {
+	user_id, err := GetUserID(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error":   "invalid access token",
+			"message": err.Error(),
+		})
+		return
+	}
+
+	userID := uuid.MustParse(user_id)
+
+	refreshToken, err := GetRefreshToken(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error":   "failed to fetch refresh token",
+			"message": err.Error(),
+		})
+		return
+	}
+
+	accessTokens, err := c.serv.RefreshToken(ctx, userID, refreshToken)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error":   "failed to create new access tokens",
+			"message": err.Error(),
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusCreated, accessTokens)
 }

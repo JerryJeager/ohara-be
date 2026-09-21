@@ -1,6 +1,0 @@
-CREATE TABLE IF NOT EXISTS websites(
-    id UUID PRIMARY KEY,
-    url VARCHAR,
-    name VARCHAR,
-    status  VARCHAR
-);

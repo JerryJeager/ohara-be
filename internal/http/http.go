@@ -13,3 +13,7 @@ type WebsiteIDPP struct{
 func GetUserID(ctx context.Context) (string, error) {
 	return ctx.Value("user_id").(string), nil
 }
+
+func GetRefreshToken(ctx context.Context) (string, error) {
+	return ctx.Value("refresh_token").(string), nil
+}

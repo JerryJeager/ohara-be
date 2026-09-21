@@ -27,7 +27,7 @@ func ValidateToken(c *gin.Context) (string, error) {
 }
 
 func getToken(c *gin.Context) (*jwt.Token, error) {
-	tokenString := getTokenFromRequest(c)
+	tokenString := GetTokenFromRequest(c)
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
@@ -38,7 +38,7 @@ func getToken(c *gin.Context) (*jwt.Token, error) {
 	return token, err
 }
 
-func getTokenFromRequest(c *gin.Context) string {
+func GetTokenFromRequest(c *gin.Context) string {
 	bearerToken := c.Request.Header.Get("Authorization")
 
 	splitToken := strings.Split(bearerToken, " ")
