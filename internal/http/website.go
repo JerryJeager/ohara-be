@@ -456,15 +456,22 @@ func saveContentEmbedding(websiteID uuid.UUID, websiteUrl string) {
 }
 
 func (c *WebsiteController) GetWebsite(ctx *gin.Context) {
-	var websiteID WebsiteIDPP
-	if err := ctx.ShouldBindUri(&websiteID); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
+	userId, err := GetUserID(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"error": err,
 		})
 		return
 	}
 
-	website, err := c.serv.GetWebsite(ctx, uuid.MustParse(websiteID.WebsiteID))
+	userID, err := uuid.Parse(userId)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": err,
+		})
+		return
+	}
+	website, err := c.serv.GetWebsite(ctx, userID)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"error": err,
@@ -473,6 +480,29 @@ func (c *WebsiteController) GetWebsite(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, website)
+}
+
+func (c *WebsiteController) GetIndexedPages(ctx *gin.Context) {
+	var websiteID WebsiteIDPP
+	if err := ctx.ShouldBindUri(&websiteID); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": err,
+		})
+		return
+	}
+
+	indexedPages, err := c.serv.GetIndexedPages(ctx, uuid.MustParse(websiteID.WebsiteID))
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"indexed_pages": indexedPages,
+	})
+
 }
 
 func (c *WebsiteController) DeleteWebsite(ctx *gin.Context) {

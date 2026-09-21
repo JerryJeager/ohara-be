@@ -18,3 +18,9 @@ type Website struct {
 }
 
 type WebsiteList []Website
+
+type PageUrl struct {
+	PageUrl string `json:"page_url"`
+}
+
+type IndexedPages []PageUrl

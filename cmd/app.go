@@ -37,7 +37,10 @@ func ExecuteApiRoutes() {
 	documents.GET("/query/:website_id", documentController.QueryDocument)
 	documents.GET("/chunk", documentController.ChunkDocument)
 
-	websites.POST("", websiteController.CreateWebsite)
+	websites.POST("", middleware.JwtAuthMiddleware(), websiteController.CreateWebsite)
+	websites.GET("", middleware.JwtAuthMiddleware(), websiteController.GetWebsite)
+	websites.GET("/:website_id/indexed", middleware.JwtAuthMiddleware(), websiteController.GetIndexedPages)
+	websites.DELETE("/:website_id", middleware.JwtAuthMiddleware(), websiteController.DeleteWebsite)
 
 	port := os.Getenv("PORT")
 	if port == "" {

@@ -10,7 +10,8 @@ import (
 type WebsiteSv interface {
 	CreateWebsite(ctx context.Context, website *models.Website) (uuid.UUID, error)
 	GetWebsites(ctx context.Context) (*models.WebsiteList, error)
-	GetWebsite(ctx context.Context, websiteID uuid.UUID) (*models.Website, error)
+	GetWebsite(ctx context.Context, userID uuid.UUID) (*[]models.Website, error)
+	GetIndexedPages(ctx context.Context, websiteID uuid.UUID) (*models.IndexedPages, error)
 	DeleteWebsite(ctx context.Context, websiteID uuid.UUID) error
 	UpdateWebsiteStatus(websiteID uuid.UUID, status string) error
 }
@@ -33,8 +34,12 @@ func (s *WebsiteServ) GetWebsites(ctx context.Context) (*models.WebsiteList, err
 	return s.repo.GetWebsites(ctx)
 }
 
-func (s *WebsiteServ) GetWebsite(ctx context.Context, websiteID uuid.UUID) (*models.Website, error) {
-	return s.repo.GetWebsite(ctx, websiteID)
+func (s *WebsiteServ) GetWebsite(ctx context.Context, userID uuid.UUID) (*[]models.Website, error) {
+	return s.repo.GetWebsite(ctx, userID)
+}
+
+func (s *WebsiteServ) GetIndexedPages(ctx context.Context, websiteID uuid.UUID) (*models.IndexedPages, error) {
+	return s.repo.GetIndexedPages(ctx, websiteID)
 }
 
 func (s *WebsiteServ) DeleteWebsite(ctx context.Context, websiteID uuid.UUID) error {
