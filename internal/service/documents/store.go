@@ -14,6 +14,7 @@ type DocumentStore interface {
 	CreateDocument(ctx context.Context, document *models.Document) error
 	GetDocumentChunks(ctx context.Context, embedding pgvector.Vector) (*models.QueryDocumentList, error)
 	GetDocumentChunksForQuery(ctx context.Context, websiteID uuid.UUID, embedding pgvector.Vector) (*models.QueryDocumentList, error)
+	GetWebsite(ctx context.Context, websiteID uuid.UUID) (*models.Website, error)
 }
 
 type DocumentRepo struct {
@@ -73,4 +74,12 @@ func (r *DocumentRepo) GetDocumentChunksForQuery(ctx context.Context, websiteID 
 	}
 
 	return &documentList, nil
+}
+
+func (r *DocumentRepo) GetWebsite(ctx context.Context, websiteID uuid.UUID) (*models.Website, error) {
+	var website models.Website
+	if err := r.client.WithContext(ctx).Where("id = ?", websiteID).First(&website).Error; err != nil {
+		return nil, err
+	}
+	return &website, nil
 }

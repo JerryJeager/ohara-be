@@ -20,6 +20,7 @@ type DocumentSv interface {
 	QueryDocument(ctx context.Context, query *models.Query) (string, error)
 	ChunkDocument(ctx context.Context, chunkReq *models.ChunkReq) []string
 	QueryWebsiteDocument(ctx context.Context, websiteID uuid.UUID, query *models.Query) (string, error)
+	GetWebsite(ctx context.Context, websiteID uuid.UUID) (*models.Website, error)
 }
 
 type DocumentServ struct {
@@ -234,4 +235,8 @@ func (s *DocumentServ) QueryWebsiteDocument(ctx context.Context, websiteID uuid.
 
 func (s *DocumentServ) ChunkDocument(ctx context.Context, chunkReq *models.ChunkReq) []string {
 	return utils.ChunkBySentence(chunkReq.Content)
+}
+
+func (s *DocumentServ) GetWebsite(ctx context.Context, websiteID uuid.UUID) (*models.Website, error) {
+	return s.repo.GetWebsite(ctx, websiteID)
 }

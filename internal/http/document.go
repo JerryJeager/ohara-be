@@ -2,6 +2,8 @@ package http
 
 import (
 	"net/http"
+	"net/url"
+	"strings"
 
 	"github.com/JerryJeager/ohara-be/internal/models"
 	"github.com/JerryJeager/ohara-be/internal/service/documents"
@@ -55,6 +57,49 @@ func (c *DocumentController) QueryDocument(ctx *gin.Context) {
 		return
 	}
 
+	website, err := c.serv.GetWebsite(ctx, websiteId)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	allowedHost := getHostname(website.Url)
+
+	origin := ctx.GetHeader("Origin")
+
+	// Fallback to Referer
+	if origin == "" {
+		origin = ctx.GetHeader("Referer")
+	}
+
+	if origin == "" {
+		ctx.JSON(http.StatusForbidden, gin.H{
+			"error": "missing origin",
+		})
+		return
+	}
+
+	requestHost := getHostname(origin)
+
+	isLocalhost := requestHost == "localhost" ||
+		requestHost == "127.0.0.1"
+
+	if isLocalhost {
+		if !website.IsLocalDevEnabled {
+			ctx.JSON(http.StatusForbidden, gin.H{
+				"error": "local development not allowed",
+			})
+			return
+		}
+	} else if requestHost != allowedHost {
+		ctx.JSON(http.StatusForbidden, gin.H{
+			"error": "unauthorized domain",
+		})
+		return
+	}
+
 	response, err := c.serv.QueryWebsiteDocument(ctx, websiteId, &query)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
@@ -82,4 +127,13 @@ func (c *DocumentController) ChunkDocument(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{
 		"chunks": chunks,
 	})
+}
+
+func getHostname(rawURL string) string {
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return ""
+	}
+
+	return strings.ToLower(u.Hostname())
 }
