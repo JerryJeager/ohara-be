@@ -532,6 +532,33 @@ func (c *WebsiteController) UpdateLocalDev(ctx *gin.Context) {
 	ctx.Status(http.StatusOK)
 }
 
+func (c *WebsiteController) UpdateAllowedOrigins(ctx *gin.Context) {
+	var websiteID WebsiteIDPP
+	if err := ctx.ShouldBindUri(&websiteID); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": err,
+		})
+		return
+	}
+
+	var allowedOrigins models.AllowedOrigins
+	if err := ctx.ShouldBindJSON(&allowedOrigins); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": err,
+		})
+		return
+	}
+
+	if err := c.serv.UpdateAllowedOrigins(ctx, uuid.MustParse(websiteID.WebsiteID), &allowedOrigins); err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"error": err,
+		})
+		return
+	}
+
+	ctx.Status(http.StatusOK)
+}
+
 func (c *WebsiteController) DeleteWebsite(ctx *gin.Context) {
 	var websiteID WebsiteIDPP
 	if err := ctx.ShouldBindUri(&websiteID); err != nil {

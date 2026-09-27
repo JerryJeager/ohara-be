@@ -15,6 +15,7 @@ type WebsiteSv interface {
 	DeleteWebsite(ctx context.Context, websiteID uuid.UUID) error
 	UpdateWebsiteStatus(websiteID uuid.UUID, status string) error
 	UpdateLocalDev(ctx context.Context, enabled *models.IsLocalDevEnabled, websiteID uuid.UUID) error
+	UpdateAllowedOrigins(ctx context.Context, websiteID uuid.UUID, allowedOrigins *models.AllowedOrigins) error
 }
 
 type WebsiteServ struct {
@@ -53,4 +54,8 @@ func (s *WebsiteServ) UpdateWebsiteStatus(websiteID uuid.UUID, status string) er
 
 func (s *WebsiteServ) UpdateLocalDev(ctx context.Context, enabled *models.IsLocalDevEnabled, websiteID uuid.UUID) error {
 	return s.UpdateLocalDev(ctx, enabled, websiteID)
+}
+
+func (s *WebsiteServ) UpdateAllowedOrigins(ctx context.Context, websiteID uuid.UUID, allowedOrigins *models.AllowedOrigins) error {
+	return s.UpdateAllowedOrigins(ctx, websiteID, allowedOrigins)
 }

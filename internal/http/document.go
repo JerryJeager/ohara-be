@@ -42,75 +42,79 @@ func (c *DocumentController) EmbedDocument(ctx *gin.Context) {
 func (c *DocumentController) QueryDocument(ctx *gin.Context) {
 	var websiteID WebsiteIDPP
 	if err := ctx.ShouldBindUri(&websiteID); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	websiteId := uuid.MustParse(websiteID.WebsiteID)
 	var query models.Query
 	if err := ctx.ShouldBindJSON(&query); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	website, err := c.serv.GetWebsite(ctx, websiteId)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	allowedHost := getHostname(website.Url)
-
 	origin := ctx.GetHeader("Origin")
-
-	// Fallback to Referer
 	if origin == "" {
 		origin = ctx.GetHeader("Referer")
 	}
-
 	if origin == "" {
-		ctx.JSON(http.StatusForbidden, gin.H{
-			"error": "missing origin",
-		})
+		ctx.JSON(http.StatusForbidden, gin.H{"error": "missing origin"})
 		return
 	}
 
 	requestHost := getHostname(origin)
+	if requestHost == "" {
+		ctx.JSON(http.StatusForbidden, gin.H{"error": "invalid origin"})
+		return
+	}
 
-	isLocalhost := requestHost == "localhost" ||
-		requestHost == "127.0.0.1"
-
-	if isLocalhost {
-		if !website.IsLocalDevEnabled {
-			ctx.JSON(http.StatusForbidden, gin.H{
-				"error": "local development not allowed",
-			})
-			return
-		}
-	} else if requestHost != allowedHost {
-		ctx.JSON(http.StatusForbidden, gin.H{
-			"error": "unauthorized domain",
-		})
+	if !isAllowedHost(requestHost, website.Url, *website.AllowedOrigins) {
+		ctx.JSON(http.StatusForbidden, gin.H{"error": "unauthorized domain"})
 		return
 	}
 
 	response, err := c.serv.QueryWebsiteDocument(ctx, websiteId, &query)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"error": err.Error(),
-		})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{
-		"response": response,
-	})
+	ctx.JSON(http.StatusOK, gin.H{"response": response})
+}
+
+func isAllowedHost(requestHost, websiteURL string, allowedOrigins []string) bool {
+	if requestHost == getHostname(websiteURL) {
+		return true
+	}
+	for _, o := range allowedOrigins {
+		if requestHost == getHostname(o) {
+			return true
+		}
+	}
+	return false
+}
+
+// "https://Example.com/", "example.com", and "example.com:8080" all -> "example.com".
+func getHostname(raw string) string {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return ""
+	}
+	if !strings.Contains(raw, "://") {
+		raw = "http://" + raw
+	}
+
+	u, err := url.Parse(raw)
+	if err != nil {
+		return ""
+	}
+	return strings.ToLower(u.Hostname())
 }
 
 func (c *DocumentController) ChunkDocument(ctx *gin.Context) {
@@ -127,13 +131,4 @@ func (c *DocumentController) ChunkDocument(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{
 		"chunks": chunks,
 	})
-}
-
-func getHostname(rawURL string) string {
-	u, err := url.Parse(rawURL)
-	if err != nil {
-		return ""
-	}
-
-	return strings.ToLower(u.Hostname())
 }

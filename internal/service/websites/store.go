@@ -17,6 +17,7 @@ type WebsiteStore interface {
 	GetWebsite(ctx context.Context, userID uuid.UUID) (*[]models.Website, error)
 	UpdateWebsiteStatus(websiteID uuid.UUID, status string) error
 	UpdateLocalDev(ctx context.Context, enabled *models.IsLocalDevEnabled, websiteID uuid.UUID) error
+	UpdateAllowedOrigins(ctx context.Context, websiteID uuid.UUID, allowedOrigins *models.AllowedOrigins) error
 }
 
 type WebsiteRepo struct {
@@ -68,6 +69,10 @@ func (r *WebsiteRepo) UpdateWebsiteStatus(websiteID uuid.UUID, status string) er
 
 func (r *WebsiteRepo) UpdateLocalDev(ctx context.Context, enabled *models.IsLocalDevEnabled, websiteID uuid.UUID) error {
 	return r.client.WithContext(ctx).Model(&models.Website{}).Where("id = ?", websiteID).Update("is_local_dev_enabled", enabled.IsLocalDevEnabled).Error
+}
+
+func (r *WebsiteRepo) UpdateAllowedOrigins(ctx context.Context, websiteID uuid.UUID, allowedOrigins *models.AllowedOrigins) error{
+	return r.client.WithContext(ctx).Model(&models.Website{}).Where("id = ?", websiteID).Update("allowed_origins", allowedOrigins).Error
 }
 
 func UpdateWebsiteStatus(websiteID uuid.UUID, status string) error {
