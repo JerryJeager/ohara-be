@@ -2,13 +2,12 @@ package http
 
 import (
 	"net/http"
-	"os"
 
 	"github.com/JerryJeager/ohara-be/internal/models"
 	"github.com/JerryJeager/ohara-be/internal/service/users"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"google.golang.org/api/idtoken"
+	// "google.golang.org/api/idtoken"
 )
 
 type UserController struct {
@@ -20,34 +19,42 @@ func NewUserController(serv users.UserSv) *UserController {
 }
 
 func (c *UserController) GoogleAuth(ctx *gin.Context) {
-	var googleAuthReq models.GoogleAuthReq
-
-	if err := ctx.ShouldBindJSON(&googleAuthReq); err != nil {
+	var user models.User
+	if err := ctx.ShouldBindJSON(&user); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error": "invalid request body",
 		})
 		return
 	}
 
-	payload, err := idtoken.Validate(ctx, googleAuthReq.IDToken, os.Getenv("GOOGLE_OAUTH_CLIENT_ID"))
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to validate Google ID token"})
-		return
-	}
+	// var googleAuthReq models.GoogleAuthReq
 
-	email, _ := payload.Claims["email"].(string)
-	name, _ := payload.Claims["name"].(string)
-	googleID, _ := payload.Claims["sub"].(string)
-	picture, _ := payload.Claims["picture"].(string)
+	// if err := ctx.ShouldBindJSON(&googleAuthReq); err != nil {
+	// 	ctx.JSON(http.StatusBadRequest, gin.H{
+	// 		"error": "invalid request body",
+	// 	})
+	// 	return
+	// }
 
-	user := &models.User{
-		Email:          email,
-		Name:           name,
-		GoogleID:       googleID,
-		ProfilePicture: picture,
-	}
+	// payload, err := idtoken.Validate(ctx, googleAuthReq.IDToken, os.Getenv("GOOGLE_OAUTH_CLIENT_ID"))
+	// if err != nil {
+	// 	ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to validate Google ID token"})
+	// 	return
+	// }
 
-	userData, token, err := c.serv.AuthUser(ctx, user)
+	// email, _ := payload.Claims["email"].(string)
+	// name, _ := payload.Claims["name"].(string)
+	// googleID, _ := payload.Claims["sub"].(string)
+	// picture, _ := payload.Claims["picture"].(string)
+
+	// user := &models.User{
+	// 	Email:          email,
+	// 	Name:           name,
+	// 	GoogleID:       googleID,
+	// 	ProfilePicture: picture,
+	// }
+
+	userData, token, err := c.serv.AuthUser(ctx, &user)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save user", "message": err.Error()})
 		return

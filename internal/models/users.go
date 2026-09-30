@@ -16,7 +16,7 @@ type User struct {
 	Name           string    `json:"name"`
 	Email          string    `json:"email" binding:"required"`
 	ProfilePicture string    `json:"profile_picture"`
-	GoogleID       string    `json:"google_id"`
+	GoogleID       string    `json:"-"`
 	RefreshToken   string    `json:"refresh_token"`
 	CreatedAt      time.Time `json:"created_at"`
 }
