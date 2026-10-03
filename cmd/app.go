@@ -43,6 +43,7 @@ func ExecuteApiRoutes() {
 			websites.POST("", websiteController.CreateWebsite)
 			websites.GET("", websiteController.GetWebsite)
 			websites.GET("/:website_id/indexed", websiteController.GetIndexedPages)
+			websites.GET("/:website_id/allowed-origins", websiteController.GetAllowedOrigins)			
 			websites.PATCH("/:website_id/local-dev", websiteController.UpdateLocalDev)
 			websites.PATCH("/:website_id/allowed-origins", websiteController.UpdateAllowedOrigins)
 			websites.DELETE("/:website_id", websiteController.DeleteWebsite)

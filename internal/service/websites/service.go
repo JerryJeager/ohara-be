@@ -8,10 +8,11 @@ import (
 )
 
 type WebsiteSv interface {
-	CreateWebsite(ctx context.Context, website *models.Website) (uuid.UUID, error)
+	CreateWebsite(ctx context.Context, userID uuid.UUID, website *models.Website) (uuid.UUID, error)
 	GetWebsites(ctx context.Context) (*models.WebsiteList, error)
 	GetWebsite(ctx context.Context, userID uuid.UUID) (*[]models.Website, error)
 	GetIndexedPages(ctx context.Context, websiteID uuid.UUID) (*models.IndexedPages, error)
+	GetAllowedOrigins(ctx context.Context, websiteID uuid.UUID) (*models.AllowedOrigins, error)
 	DeleteWebsite(ctx context.Context, websiteID uuid.UUID) error
 	UpdateWebsiteStatus(websiteID uuid.UUID, status string) error
 	UpdateLocalDev(ctx context.Context, enabled *models.IsLocalDevEnabled, websiteID uuid.UUID) error
@@ -26,9 +27,10 @@ func NewWebsiteService(repo WebsiteStore) *WebsiteServ {
 	return &WebsiteServ{repo: repo}
 }
 
-func (s *WebsiteServ) CreateWebsite(ctx context.Context, website *models.Website) (uuid.UUID, error) {
+func (s *WebsiteServ) CreateWebsite(ctx context.Context, userID uuid.UUID, website *models.Website) (uuid.UUID, error) {
 	id := uuid.New()
 	website.ID = id
+	website.UserID = userID
 	return id, s.repo.CreateWebsite(ctx, website)
 }
 
@@ -44,6 +46,10 @@ func (s *WebsiteServ) GetIndexedPages(ctx context.Context, websiteID uuid.UUID) 
 	return s.repo.GetIndexedPages(ctx, websiteID)
 }
 
+func (s *WebsiteServ) GetAllowedOrigins(ctx context.Context, websiteID uuid.UUID) (*models.AllowedOrigins, error) {
+	return s.repo.GetAllowedOrigins(ctx, websiteID)
+}
+
 func (s *WebsiteServ) DeleteWebsite(ctx context.Context, websiteID uuid.UUID) error {
 	return s.repo.DeleteWebsite(ctx, websiteID)
 }
@@ -53,9 +59,9 @@ func (s *WebsiteServ) UpdateWebsiteStatus(websiteID uuid.UUID, status string) er
 }
 
 func (s *WebsiteServ) UpdateLocalDev(ctx context.Context, enabled *models.IsLocalDevEnabled, websiteID uuid.UUID) error {
-	return s.UpdateLocalDev(ctx, enabled, websiteID)
+	return s.repo.UpdateLocalDev(ctx, enabled, websiteID)
 }
 
 func (s *WebsiteServ) UpdateAllowedOrigins(ctx context.Context, websiteID uuid.UUID, allowedOrigins *models.AllowedOrigins) error {
-	return s.UpdateAllowedOrigins(ctx, websiteID, allowedOrigins)
+	return s.repo.UpdateAllowedOrigins(ctx, websiteID, allowedOrigins)
 }

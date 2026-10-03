@@ -13,6 +13,7 @@ type WebsiteStore interface {
 	CreateWebsite(ctx context.Context, website *models.Website) error
 	GetWebsites(ctx context.Context) (*models.WebsiteList, error)
 	GetIndexedPages(ctx context.Context, websiteID uuid.UUID) (*models.IndexedPages, error)
+	GetAllowedOrigins(ctx context.Context, websiteID uuid.UUID) (*models.AllowedOrigins, error)
 	DeleteWebsite(ctx context.Context, websiteID uuid.UUID) error
 	GetWebsite(ctx context.Context, userID uuid.UUID) (*[]models.Website, error)
 	UpdateWebsiteStatus(websiteID uuid.UUID, status string) error
@@ -57,6 +58,20 @@ func (r *WebsiteRepo) GetIndexedPages(ctx context.Context, websiteID uuid.UUID) 
 		return nil, err
 	}
 	return &indexedPages, nil
+}
+
+func (r *WebsiteRepo) GetAllowedOrigins(ctx context.Context, websiteID uuid.UUID) (*models.AllowedOrigins, error) {
+	var website models.Website
+	if err := r.client.WithContext(ctx).Where("id = ?", websiteID).First(&website).Error; err != nil {
+		return nil, err
+	}
+
+	if website.AllowedOrigins == nil {
+		emptyOrigins := models.AllowedOrigins{}
+		return &emptyOrigins, nil
+	}
+
+	return website.AllowedOrigins, nil
 }
 
 func (r *WebsiteRepo) DeleteWebsite(ctx context.Context, websiteID uuid.UUID) error {

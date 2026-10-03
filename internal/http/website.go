@@ -67,6 +67,17 @@ const (
 )
 
 func (c *WebsiteController) CreateWebsite(ctx *gin.Context) {
+	user_id, err := GetUserID(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "invalid access token",
+			"message": err.Error(),
+		})
+		return
+	}
+
+	userID := uuid.MustParse(user_id)
+
 	var website models.Website
 	if err := ctx.ShouldBindJSON(&website); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
@@ -76,7 +87,7 @@ func (c *WebsiteController) CreateWebsite(ctx *gin.Context) {
 		return
 	}
 
-	websiteID, err := c.serv.CreateWebsite(ctx, &website)
+	websiteID, err := c.serv.CreateWebsite(ctx, userID, &website)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
@@ -503,6 +514,33 @@ func (c *WebsiteController) GetIndexedPages(ctx *gin.Context) {
 		"indexed_pages": indexedPages,
 	})
 
+}
+
+func (c *WebsiteController) GetAllowedOrigins(ctx *gin.Context) {
+	var websiteID WebsiteIDPP
+	if err := ctx.ShouldBindUri(&websiteID); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": err,
+		})
+		return
+	}
+
+	allowedOrigins, err := c.serv.GetAllowedOrigins(ctx, uuid.MustParse(websiteID.WebsiteID))
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	if allowedOrigins == nil {
+		emptyOrigins := models.AllowedOrigins{}
+		allowedOrigins = &emptyOrigins
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"allowed_origins": allowedOrigins,
+	})
 }
 
 func (c *WebsiteController) UpdateLocalDev(ctx *gin.Context) {

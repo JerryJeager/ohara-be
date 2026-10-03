@@ -1,6 +1,7 @@
 package http
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/JerryJeager/ohara-be/internal/models"
@@ -93,7 +94,7 @@ func (c *UserController) GetUser(ctx *gin.Context) {
 func (c *UserController) Refresh(ctx *gin.Context) {
 	user_id, err := GetUserID(ctx)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
+		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"error":   "invalid access token",
 			"message": err.Error(),
 		})
@@ -104,21 +105,25 @@ func (c *UserController) Refresh(ctx *gin.Context) {
 
 	refreshToken, err := GetRefreshToken(ctx)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
+		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"error":   "failed to fetch refresh token",
 			"message": err.Error(),
 		})
 		return
 	}
 
-	accessTokens, err := c.serv.RefreshToken(ctx, userID, refreshToken)
+	accessTokens, user, err := c.serv.RefreshToken(ctx, userID, refreshToken)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
+		log.Println(err.Error())
+		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"error":   "failed to create new access tokens",
 			"message": err.Error(),
 		})
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, accessTokens)
+	ctx.JSON(http.StatusOK, gin.H{
+		"token": accessTokens,
+		"user":  user,
+	})
 }
