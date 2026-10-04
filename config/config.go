@@ -2,7 +2,6 @@ package config
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
 
@@ -21,25 +20,12 @@ func GetSession() *gorm.DB {
 var AI *genai.Client
 
 func ConnectToDB() {
-	environment := os.Getenv("ENVIRONMENT")
 	var db *gorm.DB
 	var err error
-	if environment == "development" {
-		//local development DB config:::
-		host := os.Getenv("HOST")
-		username := os.Getenv("USER")
-		password := os.Getenv("PASSWORD")
-		port := os.Getenv("DBPORT")
-		dbName := os.Getenv("DBNAME")
 
-		dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable", host, username, password, dbName, port)
-
-		db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
-	} else {
-		//production DB config:::
-		connectionString := os.Getenv("CONNECTION_STRING")
-		db, err = gorm.Open(postgres.Open(connectionString), &gorm.Config{})
-	}
+	//production DB config:::
+	connectionString := os.Getenv("DATABASE_URL")
+	db, err = gorm.Open(postgres.Open(connectionString), &gorm.Config{})
 
 	if err != nil {
 		log.Fatal(err)
