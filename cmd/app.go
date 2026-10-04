@@ -34,7 +34,7 @@ func ExecuteApiRoutes() {
 	users.POST("/auth/refresh", middleware.RefreshAuthMiddleware(), userController.Refresh)
 
 	documents.GET("/embed", documentController.EmbedDocument)
-	documents.GET("/query/:website_id", documentController.QueryDocument)
+	documents.POST("/query/:website_id", documentController.QueryDocument)
 	documents.GET("/chunk", documentController.ChunkDocument)
 
 	{
