@@ -11,11 +11,12 @@ func CORSMiddleware() gin.HandlerFunc {
 	}
 
 	return func(c *gin.Context) {
-		// c.Writer.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+		// c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 		origin := c.Request.Header.Get("Origin")
 
 		if allowedOrigins[origin] {
 			c.Writer.Header().Set("Access-Control-Allow-Origin", origin)
+			c.Writer.Header().Set("Vary", "Origin")
 		}
 
 		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
