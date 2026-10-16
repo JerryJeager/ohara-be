@@ -1,0 +1,7 @@
+ALTER TABLE websites ADD COLUMN contact VARCHAR;
+
+ALTER TABLE websites ADD COLUMN summary VARCHAR;
+
+ALTER TABLE websites ADD COLUMN tone VARCHAR;
+
+ALTER TABLE websites ADD COLUMN topics JSONB;

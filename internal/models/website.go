@@ -14,6 +14,10 @@ type Website struct {
 	UserID            uuid.UUID       `json:"user_id"`
 	Url               string          `json:"url" binding:"required"`
 	Name              string          `json:"name"`
+	Contact           string          `json:"contact" binding:"required"`
+	Summary           string          `json:"summary"`
+	Tone              string          `json:"tone"`
+	Topics            *Topics         `json:"topics"`
 	Status            string          `json:"status"`
 	IsLocalDevEnabled bool            `json:"is_local_dev_enabled"`
 	AllowedOrigins    *AllowedOrigins `json:"allowed_origins"`
@@ -31,6 +35,26 @@ type IndexedPages []PageUrl
 
 type IsLocalDevEnabled struct {
 	IsLocalDevEnabled bool `json:"is_local_dev_enabled" binding:"required"`
+}
+
+type SiteProfile struct {
+	Summary string   `json:"summary"`
+	Tone    string   `json:"tone"`
+	Topics  []string `json:"topics"`
+}
+
+type Topics []string
+
+func (a Topics) Value() (driver.Value, error) {
+	return json.Marshal(a)
+}
+
+func (a *Topics) Scan(value interface{}) error {
+	bytes, ok := value.([]byte)
+	if !ok {
+		return fmt.Errorf("expected []byte, returned %T", value)
+	}
+	return json.Unmarshal(bytes, a)
 }
 
 type AllowedOrigins []string
@@ -53,6 +77,10 @@ func (w *Website) MarshalJSON() ([]byte, error) {
 		"user_id":         w.UserID,
 		"url":             w.Url,
 		"name":            w.Name,
+		"contact":         w.Contact,
+		"summary":         w.Summary,
+		"tone":            w.Tone,
+		"topics":          w.Topics,
 		"status":          w.Status,
 		"allowed_origins": w.AllowedOrigins,
 		"created_at":      w.CreatedAt,

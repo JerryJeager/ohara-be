@@ -95,7 +95,7 @@ func (c *WebsiteController) CreateWebsite(ctx *gin.Context) {
 		return
 	}
 
-	go saveContentEmbedding(websiteID, website.Url)
+	go saveContentEmbedding(websiteID, website.Url, website.Name)
 
 	ctx.JSON(http.StatusAccepted, gin.H{
 		"website_id": websiteID,
@@ -431,7 +431,7 @@ func normalizeWhitespace(s string) string {
 
 // ---------- orchestration ----------
 
-func saveContentEmbedding(websiteID uuid.UUID, websiteUrl string) {
+func saveContentEmbedding(websiteID uuid.UUID, websiteUrl, websiteName string) {
 	defer func() {
 		if r := recover(); r != nil {
 			log.Printf("panic in saveContentEmbedding for %s: %v", websiteID, r)
@@ -444,6 +444,16 @@ func saveContentEmbedding(websiteID uuid.UUID, websiteUrl string) {
 		log.Printf("no pages successfully crawled for website %s", websiteID)
 		_ = websites.UpdateWebsiteStatus(websiteID, "failed")
 		return
+	}
+
+	siteProfile, err := websites.GenerateSiteProfile(websiteName, pages[0].content)
+	if err != nil{
+		log.Printf("failed to get tone, topic and summary for site: %s @%s", websiteName, websiteUrl)
+	}
+
+	err = websites.UpdateSiteProfile(websiteID, siteProfile)
+	if err != nil{
+		log.Printf("failed to save site profile info for site: %s @%s", websiteName, websiteUrl)
 	}
 
 	var embedErrCount int

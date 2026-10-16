@@ -86,10 +86,15 @@ func (r *WebsiteRepo) UpdateLocalDev(ctx context.Context, enabled *models.IsLoca
 	return r.client.WithContext(ctx).Model(&models.Website{}).Where("id = ?", websiteID).Update("is_local_dev_enabled", enabled.IsLocalDevEnabled).Error
 }
 
-func (r *WebsiteRepo) UpdateAllowedOrigins(ctx context.Context, websiteID uuid.UUID, allowedOrigins *models.AllowedOrigins) error{
+func (r *WebsiteRepo) UpdateAllowedOrigins(ctx context.Context, websiteID uuid.UUID, allowedOrigins *models.AllowedOrigins) error {
 	return r.client.WithContext(ctx).Model(&models.Website{}).Where("id = ?", websiteID).Update("allowed_origins", allowedOrigins).Error
 }
 
 func UpdateWebsiteStatus(websiteID uuid.UUID, status string) error {
 	return config.Session.Model(&models.Website{}).Where("id = ?", websiteID).Update("status", status).Error
+}
+
+func UpdateSiteProfile(websiteID uuid.UUID, siteProfile *models.SiteProfile) error {
+	topics := models.Topics(siteProfile.Topics)
+	return config.Session.Model(&models.Website{}).Where("id = ?", websiteID).Updates(map[string]interface{}{"tone": siteProfile.Tone, "summary": siteProfile.Summary, "topics": topics}).Error
 }

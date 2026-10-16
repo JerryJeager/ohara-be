@@ -1,0 +1,7 @@
+ALTER TABLE websites DROP COLUMN contact;
+
+ALTER TABLE websites DROP COLUMN summary;
+
+ALTER TABLE websites DROP COLUMN tone;
+
+ALTER TABLE websites DROP COLUMN topics;

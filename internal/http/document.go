@@ -74,7 +74,11 @@ func (c *DocumentController) QueryDocument(ctx *gin.Context) {
 		return
 	}
 
-	if !isAllowedHost(requestHost, website.Url, *website.AllowedOrigins) {
+	allowedOrigins := []string{}
+	if website.AllowedOrigins != nil {
+		allowedOrigins = []string(*website.AllowedOrigins)
+	}
+	if !isAllowedHost(requestHost, website.Url, allowedOrigins) {
 		ctx.JSON(http.StatusForbidden, gin.H{"error": "unauthorized domain"})
 		return
 	}
