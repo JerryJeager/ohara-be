@@ -37,6 +37,8 @@ func ExecuteApiRoutes() {
 	documents.POST("/query/:website_id", documentController.QueryDocument)
 	documents.GET("/chunk", documentController.ChunkDocument)
 
+	websites.GET("/:website_id/widget", websiteController.GetWidget)
+
 	{
 		websites.Use(middleware.JwtAuthMiddleware())
 		{

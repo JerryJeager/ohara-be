@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"net/http"
 	"net/url"
+	"os"
 	"regexp"
 	"time"
 
@@ -447,12 +448,12 @@ func saveContentEmbedding(websiteID uuid.UUID, websiteUrl, websiteName string) {
 	}
 
 	siteProfile, err := websites.GenerateSiteProfile(websiteName, pages[0].content)
-	if err != nil{
+	if err != nil {
 		log.Printf("failed to get tone, topic and summary for site: %s @%s", websiteName, websiteUrl)
 	}
 
 	err = websites.UpdateSiteProfile(websiteID, siteProfile)
-	if err != nil{
+	if err != nil {
 		log.Printf("failed to save site profile info for site: %s @%s", websiteName, websiteUrl)
 	}
 
@@ -625,4 +626,46 @@ func (c *WebsiteController) DeleteWebsite(ctx *gin.Context) {
 	}
 
 	ctx.Status(http.StatusNoContent)
+}
+
+func (c *WebsiteController) embedError(ctx *gin.Context) {
+	ctx.Redirect(http.StatusFound, os.Getenv("WIDGET_FRONTEND_URL")+"/widget/error")
+}
+
+func (c *WebsiteController) GetWidget(ctx *gin.Context) {
+	var websiteID WebsiteIDPP
+	if err := ctx.ShouldBindUri(&websiteID); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": err,
+		})
+		return
+	}
+
+	website, err := c.serv.GetWebsiteByID(ctx, uuid.MustParse(websiteID.WebsiteID))
+	if err != nil {
+		log.Printf("embed: website %s not found", websiteID.WebsiteID)
+		c.embedError(ctx)
+		return
+	}
+
+	origin := ctx.GetHeader("Referer")
+	requestHost := getHostname(origin)
+	if requestHost == "" {
+		log.Printf("embed: missing referer for website %s", websiteID.WebsiteID)
+		c.embedError(ctx)
+		return
+	}
+
+	allowedOrigins := []string{}
+	if website.AllowedOrigins != nil {
+		allowedOrigins = []string(*website.AllowedOrigins)
+	}
+	if !isAllowedHost(requestHost, website.Url, allowedOrigins) {
+		log.Printf("embed: blocked host %s for website %s", requestHost, websiteID.WebsiteID)
+		c.embedError(ctx)
+		return
+	}
+
+	ctx.Redirect(http.StatusFound,
+		os.Getenv("WIDGET_FRONTEND_URL")+"/widget?websiteId="+website.ID.String())
 }

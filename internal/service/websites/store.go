@@ -16,6 +16,7 @@ type WebsiteStore interface {
 	GetAllowedOrigins(ctx context.Context, websiteID uuid.UUID) (*models.AllowedOrigins, error)
 	DeleteWebsite(ctx context.Context, websiteID uuid.UUID) error
 	GetWebsite(ctx context.Context, userID uuid.UUID) (*[]models.Website, error)
+	GetWebsiteByID(ctx context.Context, websiteID uuid.UUID) (*models.Website, error)
 	UpdateWebsiteStatus(websiteID uuid.UUID, status string) error
 	UpdateLocalDev(ctx context.Context, enabled *models.IsLocalDevEnabled, websiteID uuid.UUID) error
 	UpdateAllowedOrigins(ctx context.Context, websiteID uuid.UUID, allowedOrigins *models.AllowedOrigins) error
@@ -46,6 +47,14 @@ func (r *WebsiteRepo) GetWebsite(ctx context.Context, userID uuid.UUID) (*[]mode
 	qry := `select w.* from websites as w inner join users as u on w.user_id = u.id where u.id = ?`
 
 	if err := r.client.WithContext(ctx).Raw(qry, userID).Scan(&website).Error; err != nil {
+		return nil, err
+	}
+	return &website, nil
+}
+
+func (r *WebsiteRepo) GetWebsiteByID(ctx context.Context, websiteID uuid.UUID) (*models.Website, error) {
+	var website models.Website
+	if err := r.client.WithContext(ctx).First(&website, "id = ?", websiteID).Error; err != nil {
 		return nil, err
 	}
 	return &website, nil

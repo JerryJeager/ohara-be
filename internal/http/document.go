@@ -53,35 +53,35 @@ func (c *DocumentController) QueryDocument(ctx *gin.Context) {
 		return
 	}
 
-	website, err := c.serv.GetWebsite(ctx, websiteId)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
+	// _, err := c.serv.GetWebsite(ctx, websiteId)
+	// if err != nil {
+	// 	ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	// 	return
+	// }
 
-	origin := ctx.GetHeader("Origin")
-	if origin == "" {
-		origin = ctx.GetHeader("Referer")
-	}
-	if origin == "" {
-		ctx.JSON(http.StatusForbidden, gin.H{"error": "missing origin"})
-		return
-	}
+	// origin := ctx.GetHeader("Origin")
+	// if origin == "" {
+	// 	origin = ctx.GetHeader("Referer")
+	// }
+	// if origin == "" {
+	// 	ctx.JSON(http.StatusForbidden, gin.H{"error": "missing origin"})
+	// 	return
+	// }
 
-	requestHost := getHostname(origin)
-	if requestHost == "" {
-		ctx.JSON(http.StatusForbidden, gin.H{"error": "invalid origin"})
-		return
-	}
+	// requestHost := getHostname(origin)
+	// if requestHost == "" {
+	// 	ctx.JSON(http.StatusForbidden, gin.H{"error": "invalid origin"})
+	// 	return
+	// }
 
-	allowedOrigins := []string{}
-	if website.AllowedOrigins != nil {
-		allowedOrigins = []string(*website.AllowedOrigins)
-	}
-	if !isAllowedHost(requestHost, website.Url, allowedOrigins) {
-		ctx.JSON(http.StatusForbidden, gin.H{"error": "unauthorized domain"})
-		return
-	}
+	// allowedOrigins := []string{}
+	// if website.AllowedOrigins != nil {
+	// 	allowedOrigins = []string(*website.AllowedOrigins)
+	// }
+	// if !isAllowedHost(requestHost, website.Url, allowedOrigins) {
+	// 	ctx.JSON(http.StatusForbidden, gin.H{"error": "unauthorized domain"})
+	// 	return
+	// }
 
 	response, err := c.serv.QueryWebsiteDocument(ctx, websiteId, &query)
 	if err != nil {

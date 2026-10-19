@@ -17,6 +17,7 @@ type WebsiteSv interface {
 	CreateWebsite(ctx context.Context, userID uuid.UUID, website *models.Website) (uuid.UUID, error)
 	GetWebsites(ctx context.Context) (*models.WebsiteList, error)
 	GetWebsite(ctx context.Context, userID uuid.UUID) (*[]models.Website, error)
+	GetWebsiteByID(ctx context.Context, websiteID uuid.UUID) (*models.Website, error)
 	GetIndexedPages(ctx context.Context, websiteID uuid.UUID) (*models.IndexedPages, error)
 	GetAllowedOrigins(ctx context.Context, websiteID uuid.UUID) (*models.AllowedOrigins, error)
 	DeleteWebsite(ctx context.Context, websiteID uuid.UUID) error
@@ -46,6 +47,10 @@ func (s *WebsiteServ) GetWebsites(ctx context.Context) (*models.WebsiteList, err
 
 func (s *WebsiteServ) GetWebsite(ctx context.Context, userID uuid.UUID) (*[]models.Website, error) {
 	return s.repo.GetWebsite(ctx, userID)
+}
+
+func (s *WebsiteServ) GetWebsiteByID(ctx context.Context, websiteID uuid.UUID) (*models.Website, error){
+	return s.repo.GetWebsiteByID(ctx, websiteID)
 }
 
 func (s *WebsiteServ) GetIndexedPages(ctx context.Context, websiteID uuid.UUID) (*models.IndexedPages, error) {
