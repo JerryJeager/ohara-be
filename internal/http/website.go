@@ -60,6 +60,8 @@ var skipExtensions = []string{
 	".zip", ".css", ".js", ".mp4", ".mp3", ".woff", ".woff2", ".xml",
 }
 
+var crawlSem = make(chan struct{}, 1)
+
 const (
 	maxPagesPerSite = 20
 	maxCrawlDepth   = 2
@@ -433,6 +435,9 @@ func normalizeWhitespace(s string) string {
 // ---------- orchestration ----------
 
 func saveContentEmbedding(websiteID uuid.UUID, websiteUrl, websiteName string) {
+	crawlSem <- struct{}{}
+	defer func() { <-crawlSem }()
+
 	defer func() {
 		if r := recover(); r != nil {
 			log.Printf("panic in saveContentEmbedding for %s: %v", websiteID, r)
