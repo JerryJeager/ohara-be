@@ -316,7 +316,7 @@ func extractTitle(rawHTML string) string {
 // only if some page actually needs JS rendering) across the whole crawl.
 func crawlSite(startURL string) []pageResult {
 	var rodSess *rodSession
-	defer rodSess.Close()
+	defer func() { rodSess.Close() }() 
 
 	type queueItem struct {
 		url   string
