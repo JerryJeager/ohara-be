@@ -188,13 +188,26 @@ func (s *rodSession) Close() {
 // discover outgoing links from it.
 func fetchRawWithRetry(target string, maxAttempts int, session **rodSession) (string, error) {
 	var lastErr error
+	var renderEnabled = os.Getenv("ENABLE_BROWSER_RENDER") == "true"
 
 	for attempt := 1; attempt <= maxAttempts; attempt++ {
 		rawHTML, collyErr := fetchWithColly(target)
-		content := extractCleanText(rawHTML)
-
-		if collyErr == nil && len(strings.TrimSpace(content)) >= spaThreshold {
-			return rawHTML, nil
+		if collyErr == nil {
+			content := extractCleanText(rawHTML)
+			if len(strings.TrimSpace(content)) >= spaThreshold {
+				return rawHTML, nil
+			}
+			// Loaded fine, but too little text: likely a JS-only shell.
+			if !renderEnabled {
+				return "", fmt.Errorf("little static content at %s (likely needs JavaScript rendering)", target)
+			}
+		} else if !renderEnabled {
+			// Network/HTTP error and no browser available: retry colly only.
+			lastErr = collyErr
+			if attempt < maxAttempts {
+				time.Sleep(time.Duration(attempt) * 2 * time.Second)
+			}
+			continue
 		}
 
 		log.Printf("attempt %d/%d: colly insufficient for %s (err: %v), trying rod",
@@ -318,7 +331,7 @@ func extractTitle(rawHTML string) string {
 // only if some page actually needs JS rendering) across the whole crawl.
 func crawlSite(startURL string) []pageResult {
 	var rodSess *rodSession
-	defer func() { rodSess.Close() }() 
+	defer func() { rodSess.Close() }()
 
 	type queueItem struct {
 		url   string
